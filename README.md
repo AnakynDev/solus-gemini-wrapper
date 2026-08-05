@@ -59,6 +59,42 @@ in manually. The session is saved to a local Chrome profile directory
 log in again unless the session expires. Pass `profile_dir="/custom/path"` to control
 where that profile is stored.
 
+## Full example
+
+A small script that keeps a persistent session, asks a few follow-up questions in the
+same conversation, and shuts down cleanly whether or not something goes wrong:
+
+```python
+from solus import Solus
+
+
+def main():
+    client = Solus(persistent_session=True, headless=True)
+
+    questions = [
+        "What is the capital of Portugal?",
+        "What is that city's population?",
+    ]
+
+    try:
+        for question in questions:
+            answer = client.send_message(question)
+            print(f"> {question}\n{answer}\n")
+    except Solus.ResponseTimeoutError:
+        print("Gemini took too long to respond — its page layout may have changed.")
+    except Solus.Error as error:
+        print(f"Solus failed: {error}")
+    finally:
+        client.quit()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+Because `persistent_session=True` reuses the saved Chrome profile, only the very first
+run requires you to log in by hand — every run after that picks up the existing session.
+
 ## API reference
 
 ### `Solus(system_prompt=None, headless=True, channel="chrome", persistent_session=False, profile_dir=None)`
@@ -86,17 +122,31 @@ exit even if you forget to call it.
 
 ### Exceptions
 
-All exceptions live under a common `SolusError` base, importable from the package root:
+`from solus import Solus` is all you need — every exception is also exposed as an
+attribute on `Solus` itself, so there's no separate import for error handling:
 
-- `SolusError` — base exception for the library.
-- `ClosedError` — raised when calling `send_message` on a client that has already been
-  closed via `quit()`.
-- `ResponseTimeoutError` — raised when Gemini's response doesn't appear within the
+- `Solus.Error` — base exception for the library. Catching this alone covers both
+  exceptions below.
+- `Solus.ClosedError` — raised when calling `send_message` on a client that has already
+  been closed via `quit()`.
+- `Solus.ResponseTimeoutError` — raised when Gemini's response doesn't appear within the
   expected time window.
 
 ```python
-from solus import Solus, SolusError, ClosedError, ResponseTimeoutError
+from solus import Solus
+
+client = Solus()
+try:
+    print(client.send_message("Hello"))
+except Solus.Error as error:
+    print(f"Solus failed: {error}")
+finally:
+    client.quit()
 ```
+
+If you prefer plain module-level imports instead, `SolusError`, `ClosedError`, and
+`ResponseTimeoutError` are exported from the package root too — `Solus.ClosedError` and
+the imported `ClosedError` are the exact same class, so either style works interchangeably.
 
 ## Disclaimer
 
