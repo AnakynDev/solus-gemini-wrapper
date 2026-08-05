@@ -19,10 +19,6 @@ class ResponseTimeoutError(SolusError):
 
 
 class Solus:
-    Error = SolusError
-    ClosedError = ClosedError
-    ResponseTimeoutError = ResponseTimeoutError
-
     GEMINI_URL = "https://gemini.google.com/"
     LOGIN_URL = (
         "https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fgemini"

@@ -14,8 +14,8 @@
 Solus uses [Playwright](https://playwright.dev/python/) to open Chrome, navigate to
 [gemini.google.com](https://gemini.google.com/), and drive the chat UI exactly like a
 human would: typing a prompt, pressing Enter, and reading back the rendered response.
-There is no official Gemini API call involved — it automates the same web interface you'd
-use in a browser, which is what makes it usable without a paid API plan.
+There is no official Gemini API call involved — it's browser automation packaged behind
+a simple client interface, which is what makes it usable without a paid API plan.
 
 ## Installation
 
@@ -80,10 +80,6 @@ def main():
         for question in questions:
             answer = client.send_message(question)
             print(f"> {question}\n{answer}\n")
-    except Solus.ResponseTimeoutError:
-        print("Gemini took too long to respond — its page layout may have changed.")
-    except Solus.Error as error:
-        print(f"Solus failed: {error}")
     finally:
         client.quit()
 
@@ -122,31 +118,26 @@ exit even if you forget to call it.
 
 ### Exceptions
 
-`from solus import Solus` is all you need — every exception is also exposed as an
-attribute on `Solus` itself, so there's no separate import for error handling:
+All exceptions live under a common `SolusError` base, importable from the package root:
 
-- `Solus.Error` — base exception for the library. Catching this alone covers both
+- `SolusError` — base exception for the library. Catching this alone covers both
   exceptions below.
-- `Solus.ClosedError` — raised when calling `send_message` on a client that has already
-  been closed via `quit()`.
-- `Solus.ResponseTimeoutError` — raised when Gemini's response doesn't appear within the
+- `ClosedError` — raised when calling `send_message` on a client that has already been
+  closed via `quit()`.
+- `ResponseTimeoutError` — raised when Gemini's response doesn't appear within the
   expected time window.
 
 ```python
-from solus import Solus
+from solus import Solus, SolusError, ClosedError, ResponseTimeoutError
 
 client = Solus()
 try:
     print(client.send_message("Hello"))
-except Solus.Error as error:
+except SolusError as error:
     print(f"Solus failed: {error}")
 finally:
     client.quit()
 ```
-
-If you prefer plain module-level imports instead, `SolusError`, `ClosedError`, and
-`ResponseTimeoutError` are exported from the package root too — `Solus.ClosedError` and
-the imported `ClosedError` are the exact same class, so either style works interchangeably.
 
 ## Disclaimer
 
